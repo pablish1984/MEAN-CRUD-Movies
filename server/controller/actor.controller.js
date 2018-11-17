@@ -3,37 +3,76 @@ const actorController = {};
 
 // Obtener listado de actores
 actorController.getActors = async(req, res) => {
-    const list_actors = await actorModel.find();
-    res.json(list_actors);
+    try {
+
+        const list_actors = await actorModel.find();
+        res.json(list_actors);
+
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 // Obtener actor por Id
 actorController.getActorById = async(req, res) => {
-    const singleActor = await actorModel.findById(req.params.id);
+    try {
 
-    res.json(singleActor);
+        const singleActor = await actorModel.findById(req.params.id);
+        res.json(singleActor);
+
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 // Insertar Actor
 actorController.createActor = async(req, res) => {
-    const newActor = new actorModel(req.body);
-    await newActor.save();
 
-    res.send('Actor creado correctamente');
+    try {
+        const actor = {
+            name: req.body.name,
+            nationality: req.body.nationality
+        }
+
+        const newActor = new actorModel(actor);
+        await newActor.save();
+
+        res.status(200).json({ message: "Actor Insertado" });
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 // Actualizar Actor
 actorController.updateActor = async(req, res) => {
-    await actorModel.findOneAndUpdate(req.params.id, req.body);
 
-    res.send('Actor actualizado');
+    try {
+        const actor = {
+            name: req.body.name,
+            nationality: req.body.nationality
+        }
+        await actorModel.findByIdAndUpdate(req.params.id, actor);
+
+        res.json({ message: 'Actor actualizado' });
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 // Eliminar Actor
 actorController.deleteActor = async(req, res) => {
-    await actorModel.findOneAndDelete(req.params.id);
+    try {
+        const temp = await actorModel.findByIdAndDelete(req.params.id);
+        res.json({ message: "Eliminado correctamente" });
 
-    res.send('Actor eliminado correctamente');
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 module.exports = actorController;

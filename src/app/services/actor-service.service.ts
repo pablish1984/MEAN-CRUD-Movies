@@ -24,16 +24,16 @@ export class ActorServiceService {
     return this.http.get('http://localhost:3000/api/actors');
   }
 
-  postActor(newActor: ActorModel) {
-    return this.http.post('http://localhost:3000/api/actors', newActor);
+  postActor(Actor: ActorModel) {
+    return this.http.post('http://localhost:3000/api/actors', Actor);
   }
 
   putActor(newActor: ActorModel) {
     return this.http.put('http://localhost:3000/api/actors/'+`${newActor._id}`, newActor);
   }
 
-  deleteActor(oldActor: ActorModel) {
-    return this.http.delete('http://localhost:3000/api/actors/'+`${oldActor._id}`);
+  deleteActor(_id: string) {
+   return this.http.delete('http://localhost:3000/api/actors/'+`${_id}`);
   }
 
 }

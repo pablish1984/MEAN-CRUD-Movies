@@ -22,10 +22,13 @@ moviesController.getMoviesByFields = async(req, res) => {
     }
 
     // Uso del metodo find(), pasandole parametros para filtrar mi buskeda
-    await moviesModel.find({ $or: [params] }).populate('director', '-_id -__v').populate('actors', '-_id -__v').populate('user').exec((err, movies) => {
-        if (!err)
+    await moviesModel.find({ $or: [params] }).populate('director actors', '-_id -__v').populate({
+        path: 'list_users_calification.user',
+        populate: { path: 'user' }
+    }).exec((err, movies) => {
+        if (!err) {
             res.json(movies);
-        else
+        } else
             res.json(err);
     });
 }
@@ -66,10 +69,65 @@ moviesController.updateMovie = async(req, res) => {
 }
 
 moviesController.SetScore = async(req, res) => {
-    var film = moviesModel.findById(req.params.id);
 
-    // para darle score a la pelicula, uso el id del usuario ke esta logeado y lo inserto en list_users_calification, junto al score ke le dio a la pelicula. si ya esta insertado lo unico ke hago es actualizar el valor del score y vuelvo a recalcular el score general
+    try {
+        // Obtengo el arreglo de usuarios ke le han dado score a una pelicula
+        var list_users = await moviesModel.findById(req.params.id, { "list_users_calification": 1 });
 
+        // Guardo la cantidad de usuarios hay en el arreglo y creo un nuevo objeto con la info nueva a insertar
+        var count = list_users.list_users_calification.length;
+        var aux_obj = {
+            user: req.user,
+            personal_score: req.body.score
+        }
+
+        // Recorro el arreglo buscando si el usuario logeado le dio score ya a la pelicula.SI YA LE DIO SCORE, PUES ELIMINO ESE REGISTRO VIEJO E INSERTO EL NUEVO. SI NO EXISTE PUES ANNADO AL FINAL DEL ARREGLO EL NUEVO SCORE. En otro momento se hara una llamada a recalcular el score total de la pelicula
+        for (let index = 0; index < count; index++) {
+            if (list_users.list_users_calification[index]._id === req.user._id) {
+                list_users.list_users_calification.splice(index, 1, aux_obj);
+            } else {
+                list_users.list_users_calification.push(aux_obj);
+            };
+
+        }
+
+        // Salvo la informacion de nuevo a la base de datos
+        var saved = await moviesModel.findByIdAndUpdate(req.params.id, { $set: { list_users_calification: list_users.list_users_calification } })
+        res.json(saved);
+
+    } catch (error) {
+        res.json(error);
+    }
+}
+
+moviesController.computeScore = async(req, res) => {
+    try {
+
+        // Busco todos los USUARIOS ke me han evaluado la pelicula para CALCULAR EL SCORE PROMEDIO
+        var array_users = await moviesModel.findById(req.params.id, { "list_users_calification": 1 });
+        var total_score = 0;
+
+        // Obtengo la cantidad de usuarios ke han dado Score a la pelicula
+        var count = array_users.list_users_calification.length;
+
+        // Hallo el promedio de Score de la pelicula
+        array_users.list_users_calification.forEach(element => {
+            total_score += element.personal_score;
+        });
+
+        var final_score = total_score / count;
+
+        // Una vez calculado el SCORE, Actualizar el valor en el documento
+        const saved = await moviesModel.findByIdAndUpdate(req.params.id, {
+            $set: { score: final_score }
+        }, { new: true });
+
+        if (saved) {
+            res.json(saved);
+        }
+    } catch (error) {
+        res.json(error);
+    }
 }
 
 moviesController.getScore = async(req, res) => {
@@ -82,34 +140,6 @@ moviesController.getScore = async(req, res) => {
     } catch (error) {
         res.json(error);
     }
-}
-
-moviesController.computeScore = async(req, res) => {
-    var array_users = await moviesModel.findById(req.params.id, { "list_users_calification": 1 });
-    var total_score = 0;
-
-    if (array_users) {
-        for (let index = 0; index < array_users.length; index++) {
-            total_score += array_users[index].personal_score;
-        }
-
-        res.send(array_users[1]);
-        /*
-                req.body = { score: total_score };
-
-                var movie = await moviesModel.findByIdAndUpdate(req.params.id, aux);
-                res.json(movie);*/
-    } else {
-        res.send({ message: "No hay elementos en el arreglo" });
-    }
-
-    // Recorro la lista de usuarios ke le han dado score a la pelicula sumando los scores, y cuando termine de sumarlos los divido por la cantidad de usuarios
-    /*
-    array_users.forEach(element => {
-
-    });*/
-
-
 }
 
 module.exports = moviesController;
