@@ -14,7 +14,7 @@ export class ActorServiceService {
   selectedActor: ActorModel;
   list_actors: ActorModel[];
 
-  readonly api_URI: "http://localhost:3000/api/";
+  
 
   constructor(private http: HttpClient) {
     this.selectedActor = new ActorModel();

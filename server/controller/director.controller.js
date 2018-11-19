@@ -3,38 +3,71 @@ const directorController = {};
 
 // Devolver Listado de directores
 directorController.getDirectors = async(req, res) => {
-    const list_directors = await directorModel.find();
+    try {
+        const list_directors = await directorModel.find();
+        res.json(list_directors);
+    } catch (error) {
+        res.json(error);
+    }
 
-    res.json(list_directors);
 }
 
 // Devolver Director por Id
 directorController.getDirectorById = async(req, res) => {
-    const singleDirector = await directorModel.findById(req.params.id);
+    try {
+        const singleDirector = await directorModel.findById(req.params.id);
+        res.json(singleDirector);
+    } catch (error) {
+        res.json(error);
+    }
 
-    res.json(singleDirector);
 }
 
 // Insertar Director
 directorController.createDirector = async(req, res) => {
-    const director = new directorModel(req.body);
+    try {
 
-    await director.save();
-    res.send('Director creado correctamente');
+        const aux = {
+            name: req.body.name,
+            nationality: req.body.nationality
+        }
+        const director = new directorModel(aux);
+
+        const temp = await director.save();
+        res.json({ message: 'Director creado correctamente' });
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 // Eliminar director
 directorController.deleteDirector = async(req, res) => {
-    await directorModel.findOneAndDelete(req.params.id);
+    try {
+        await directorModel.findByIdAndDelete(req.params.id);
 
-    res.send('Director eliminado correctamente');
+        res.json({ message: 'Director eliminado correctamente' });
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 // Actualizar Director
 directorController.updateDirector = async(req, res) => {
-    await directorModel.findOneAndUpdate(req.params.id, req.body);
+    try {
+        const temp = {
+            name: req.body.name,
+            nationality: req.body.nationality
+        }
 
-    res.send('Director actualizado correctamente');
+        const aux = await directorModel.findByIdAndUpdate(req.params.id, temp);
+
+        res.json({ message: 'Director actualizado correctamente' });
+    } catch (error) {
+        res.json(error);
+    }
+
 }
 
 module.exports = directorController;

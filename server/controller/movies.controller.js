@@ -26,16 +26,26 @@ moviesController.getMoviesByFields = async(req, res) => {
         path: 'list_users_calification.user',
         populate: { path: 'user' }
     }).exec((err, movies) => {
-        if (!err) {
+        if (movies) {
             res.json(movies);
         } else
-            res.json(err);
+            res.status(404).json({ message: 'No existen peliculas' });
     });
 }
 
 // Crear una pelicula
 moviesController.createMovie = async(req, res) => {
     try {
+
+        const temp = {
+            titulo: req.body.titulo,
+            categoria: req.body.categoria,
+            genero: req.body.genero,
+            annyo: req.body.annyo,
+            pais_produccion: req.body.pais_produccion,
+            duracion: req.body.duracion,
+        }
+
         const singleMovie = new moviesModel(req.body);
 
         await singleMovie.save();
